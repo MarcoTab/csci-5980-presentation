@@ -38,8 +38,46 @@ mstar g h goal source = msearch S.empty start
 -- Then,
 
 -- c(p) <= c(q') + h(u) - h(v)
-
 -- Because $p$ was selected in favour of $q'$.
+
+-- c(q') + h(u) - h(v) = c(p') - c(r) + h(u) - h(v)
+-- By the definition of path costs
+
+-- c(p') - c(r) + h(u) - h(v) <= c(p')
+-- Since $h$ is monotonic and $r$ is a path from $u$ to $v$
+
+-- TODO: We need to go over this in more detail and really understand what's happening here, I'm a bit lost.
+
+
+-- This proof makes use of a generalization of monotonicity, namely that if $r$ is a path from $u$ to $v$, then $h(u) <= c(r) + h(v)$, a sort of triangle inequality.
+
+-- Thus, `mstar` returns an optimal solution if one exists.
+
+
+-- TODO Read through the example written out below
+
+ex1_graph :: Graph
+ex1_graph 'A' = [('B', 3), ('C', 10), ('D', 20), ('E', 20)]
+ex1_graph 'B' = [('A', 3), ('C', 5), ('D', 8), ('E', 20)]
+ex1_graph 'C' = [('A', 10), ('B', 5), ('D', 2), ('E', 10)]
+ex1_graph 'D' = [('A', 20), ('B', 8), ('C', 2), ('E', 6)]
+ex1_graph 'E' = [('A', 20), ('B', 20), ('C', 10), ('D', 6), ('F', 1)]
+ex1_graph 'F' = [('E', 1)]
+
+ex1_heuristic :: Heuristic
+ex1_heuristic v = case v of
+                    'A' -> 10
+                    'B' -> 10
+                    'C' -> 5
+                    'D' -> 5
+                    'E' -> 0
+                    'F' -> 0
+
+ex1_goal :: Vertex -> Bool
+ex1_goal v = v == 'F'
+
+
+-- TODO also maybe come up with a simpler example?
 
 
 
@@ -55,8 +93,8 @@ mstar g h goal source = msearch S.empty start
 
 
 -- Some type definitions that we need.
-type Vertex = Int -- Actually depends on the application, let's go with this though
-type Cost = Integer -- Cost is always positive
+type Vertex = Char -- Actually depends on the application, let's go with this though
+type Cost = Integer -- Cost is always positive, so assume I wrote Nat here.
 
 -- Graphs are represented as functions from a vertex to a list of tuples containing adjacent vertices and their corresponding cost
 type Graph = Vertex -> [(Vertex, Cost)]
@@ -79,3 +117,19 @@ extract (vs, c) = (reverse vs, c)
 succs :: Graph -> Heuristic -> S.Set Vertex -> Path -> [(Path, Cost)]
 succs g h vs p = [extend p v d | (v, d) <- g (end p), not (S.member v vs)]
                     where extend (vs, c) v d = ((v:vs, c + d), c + d + h v)
+
+
+
+
+-- Proof of monotonicity
+
+
+
+ex1_vertexlist :: [Vertex]
+ex1_vertexlist = ['A', 'B', 'C', 'D', 'E', 'F']
+
+-- Would this convince you it's monotonic?
+is_monotonic :: [Vertex] -> Heuristic -> Graph -> Bool
+is_monotonic vs h g = all (id) 
+                        [(h u) <= c + (h v) | v <- vs, (u, c) <- g v]
+                    --   ^^^^^^^^^^^^^^^^^^ condition for monotonicity
