@@ -66,7 +66,8 @@ deleteQ (Fork _ x p t1 t2) = ((x,p), combineQ t1 t2)
 
 -- popQ is deleteQ but we don't keep the priority
 popQ :: Ord p => PQ a p -> (a, PQ a p)
-popQ q1 = (x, q2) where ((x,_), q2) = deleteQ q1 
+popQ q1 = (x, q2) 
+    where ((x,_), q2) = deleteQ q1 
 
 -- deleteQ and insertQ are both $O(log n)$.
 
