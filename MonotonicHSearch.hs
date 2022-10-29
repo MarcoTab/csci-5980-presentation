@@ -26,6 +26,12 @@ mstar g h goal source = msearch S.empty start
                         (p, qs) = popQ ps;
                         rs      = addListQ (succs g h vs p) qs;
 
+
+succs :: Graph -> Heuristic -> S.Set Vertex -> Path -> [(Path, Cost)]
+succs g h vs p = [extend p v d | (v, d) <- g (end p), not (S.member v vs)]
+                    where extend (vs, c) v d = ((v:vs, c + d), c + d + h v)
+
+
 -- There is a simple set $vs$ to record vertices that have been visited to ensure that no vertex is ever processed more than once. We will show that once a path $p$ to a vertex $v$ has been found, then $p$ has the minimum cost of any path from the source to $v$, so no further paths to $v$ need to be considered.
 
 
@@ -38,7 +44,7 @@ mstar g h goal source = msearch S.empty start
 -- Then,
 
 -- c(p) <= c(q') + h(u) - h(v)
--- Because $p$ was selected in favour of $q'$.
+-- Because $p$ was selected in favor of $q'$.
 
 -- c(q') + h(u) - h(v) = c(p') - c(r) + h(u) - h(v)
 -- By the definition of path costs
@@ -63,6 +69,9 @@ ex1_graph 'C' = [('A', 10), ('B', 5), ('D', 2), ('E', 10)]
 ex1_graph 'D' = [('A', 20), ('B', 8), ('C', 2), ('E', 6)]
 ex1_graph 'E' = [('A', 20), ('B', 20), ('C', 10), ('D', 6), ('F', 1)]
 ex1_graph 'F' = [('E', 1)]
+ex1_graph 'X' = [('Y', 3), ('Z', 2)]
+ex1_graph 'Y' = [('X', 3), ('Z', 5)]
+ex1_graph 'Z' = [('X', 2), ('Y', 5)]
 
 ex1_heuristic :: Heuristic
 ex1_heuristic v = case v of
@@ -72,16 +81,12 @@ ex1_heuristic v = case v of
                     'D' -> 5
                     'E' -> 0
                     'F' -> 0
+                    'X' -> 100
+                    'Y' -> 100
+                    'Z' -> 100
 
 ex1_goal :: Vertex -> Bool
 ex1_goal v = v == 'F'
-
-
--- TODO also maybe come up with a simpler example?
-
-
-
-
 
 
 
@@ -114,22 +119,20 @@ cost = snd
 extract :: Path -> Path
 extract (vs, c) = (reverse vs, c)
 
-succs :: Graph -> Heuristic -> S.Set Vertex -> Path -> [(Path, Cost)]
-succs g h vs p = [extend p v d | (v, d) <- g (end p), not (S.member v vs)]
-                    where extend (vs, c) v d = ((v:vs, c + d), c + d + h v)
 
 
 
 
 -- Proof of monotonicity
 
-
-
 ex1_vertexlist :: [Vertex]
 ex1_vertexlist = ['A', 'B', 'C', 'D', 'E', 'F']
+
+ex2_vertexlist :: [Vertex]
+ex2_vertexlist = ['A', 'B', 'C', 'D', 'E', 'X', 'Y', 'Z']
 
 -- Would this convince you it's monotonic?
 is_monotonic :: [Vertex] -> Heuristic -> Graph -> Bool
 is_monotonic vs h g = all (id) 
-                        [(h u) <= c + (h v) | v <- vs, (u, c) <- g v]
+                        [(h v) <= c + (h u) | v <- vs, (u, c) <- g v]
                     --   ^^^^^^^^^^^^^^^^^^ condition for monotonicity

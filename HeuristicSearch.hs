@@ -108,7 +108,7 @@ astar g h goal source = asearch M.empty start
 
 -- Let $P = [v_0, v_1, \dots, v_n]$ be the optimal path from the source $v_0$ to the goal $v_n$. Let $P_j = [v_0, \dots, v_j]$ denote the inital $j$ steps of that path, for $0 \leq j < n$.
 -- We know at each step there is an open path $p$ with endpoint $v_j$ for some $j$ such that $c(p) = c(P_j)$
--- TODO: Do we? Probably a proof by induction. $p$ must contain $v_0$, that's the base case... LMAO see below I can't read
+
 -- Hence, $p$ can be completed to an optimal path. 
 
 -- The assertion holds at the base case because $P_0$ is open. Otherwise, let $D$ be the set of vertices $v_i$ for which there is a closed path $q$ from $v_0$ to $v_i$ on the frontier with $c(q) = c(P_i)$. The set $D$ is not empty since it contains $v_0$. 
