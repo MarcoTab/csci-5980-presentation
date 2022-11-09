@@ -29,9 +29,6 @@ corners (x,y) = [(x,y),    (x+1,y),
 end :: Path -> Vertex
 end = head . fst
 
-extract :: Path -> Path
-extract (vs,d) = (reverse vs,d)
-
 free :: Grid -> Vertex -> Bool
 free (m,n,bs) = (a A.!)
     where a = A.listArray ((0,0),(m+1,n+1)) (repeat True)
@@ -59,7 +56,7 @@ mstarf :: Graph -> Vertex -> Vertex -> Maybe Path
 mstarf g goal source = msearch S.empty start
                       where start = insertQ ([source],0) (dist goal source) emptyQ
                             msearch vs ps | nullQ ps = Nothing
-                                          | goal == end p = Just (extract p)
+                                          | goal == end p = Just p
                                           | seen (end p) = msearch vs qs
                                           | otherwise = msearch (S.insert (end p) vs) rs
                                           where seen v = S.member v vs 
@@ -141,7 +138,7 @@ mstarv :: Graph -> (Segment -> Bool) -> Vertex -> Vertex -> Maybe Path
 mstarv g vtest goal source = msearch S.empty start
                       where start = insertQ ([source],0) (dist goal source) emptyQ
                             msearch vs ps | nullQ ps      = Nothing
-                                          | goal == end p = Just (extract p)
+                                          | goal == end p = Just p
                                           | seen (end p)  = msearch vs qs
                                           | otherwise     = msearch (S.insert (end p) vs) rs
                                           where seen v = S.member v vs 
@@ -185,7 +182,7 @@ bs1  = [(10,1), (11,1), (12,1), (18,1), (2,3),  (3,3),  (18,3), (10,4), (12,4), 
 --------------------------------------------------------
 --       (2,1)                                        --
 --            (3,2)                 (7,2)             --
---                 !(4,3)!                              --
+--                 !(4,3)!                            --
 -- (1,4)                            (7,4)             --
 --                                                    --
 --------------------------------------------------------
@@ -195,3 +192,13 @@ bs2  = [(2,1), (3,2), (7,2), (1,4), (7,4)]
 
 -- Grid is 9x5
 -- ex2 = (9, 5, bs2) (1,1) (9,5)
+
+-------------------------
+--                     --
+-- (1,2) (2,2)         --
+--       (2,3)         --
+-------------------------
+bs3 :: [Box]
+bs3 = [(1,2), (2,2), (2,3)]
+
+-- ex3 = (3, 4, bs3) (1,1) (3,4)
