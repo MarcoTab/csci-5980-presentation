@@ -23,8 +23,8 @@ boxes :: Grid -> [Box]
 boxes (_,_,bs) = bs
 
 corners :: Box -> [Vertex]
-corners (x,y) = [(x,y),     (x+1,y),
-                 (x+1,y-1), (x,y-1)]
+corners (x,y) = [(x,y),    (x+1,y),
+                 (x,y+1),  (x+1,y+1)]
 
 end :: Path -> Vertex
 end = head . fst
@@ -36,13 +36,13 @@ free :: Grid -> Vertex -> Bool
 free (m,n,bs) = (a A.!)
     where a = A.listArray ((0,0),(m+1,n+1)) (repeat True)
               A.//[((x,y),False) |x <-[0..m+1], y<-[0,n+1]] 
-              A.//[((x,y),False) |x <-[0,m+1], y<-[1..n]] 
+              A.//[((x,y),False) |x <-[0,m+1],  y<-[1..n]] 
               A.//[((x,y),False) |b <-bs, (x,y)<-corners b]
               
 adjacentsf :: Vertex -> [Vertex]
-adjacentsf (x,y) = [(x-1,y-1), (x-1,y), (x-1,y+1),
-                    (x,y-1),            (x,y+1),
-                    (x+1,y-1), (x+1,y), (x+1,y+1)]
+adjacentsf (x,y) = [(x-1,y-1), (x,y-1), (x+1,y-1),
+                    (x-1,y),            (x+1,y),
+                    (x-1,y+1), (x,y+1), (x+1,y+1)]
 
 -- fixed-angle sol'n : neighbors of a vertex are unoccupied / non-boundary adjacent grid points
 neighborsf :: Grid -> Graph
@@ -57,7 +57,7 @@ succsf g target visited p =
 -- mstar implementation for a fixed-angle path
 mstarf :: Graph -> Vertex -> Vertex -> Maybe Path
 mstarf g goal source = msearch S.empty start
-                      where start = insertQ ([source],0) 0 emptyQ
+                      where start = insertQ ([source],0) (dist goal source) emptyQ
                             msearch vs ps | nullQ ps = Nothing
                                           | goal == end p = Just (extract p)
                                           | seen (end p) = msearch vs qs
@@ -101,7 +101,7 @@ borders = concatMap (edges . corners) . boxes
         
 
 crosses :: Segment -> (Vertex, Vertex) -> Bool
-crosses s (v1, v2) = orientation s v1 * orientation s v2 <= 0
+crosses s (v1, v2) = orientation s v1 * orientation s v2 >= 0
 
 orientation :: Segment -> Vertex -> Int
 orientation ((x1,y1),(x2,y2)) (x,y)
@@ -139,7 +139,7 @@ succsv g vtest target vs p =
 -- mstar implementation for a smoothing path
 mstarv :: Graph -> (Segment -> Bool) -> Vertex -> Vertex -> Maybe Path
 mstarv g vtest goal source = msearch S.empty start
-                      where start = insertQ ([source],0) 0 emptyQ
+                      where start = insertQ ([source],0) (dist goal source) emptyQ
                             msearch vs ps | nullQ ps      = Nothing
                                           | goal == end p = Just (extract p)
                                           | seen (end p)  = msearch vs qs
@@ -152,3 +152,46 @@ vpath2 :: Grid -> Vertex -> Vertex -> Maybe Path
 vpath2 grid = 
     mstarv (neighborsf grid) (visible grid)
     
+    
+-------------------------------------------------------------------------------------------------------------------------
+    
+-- EXAMPLE 1: THE ONE FROM THE BOOK
+
+-- Boxes are located at
+---------------------------------------------------------------------------------------------------------------------------
+--                                                      (10,1) (11,1) (12,1)                             (18,1)          --
+--                                                                                                       (18,2)          --
+-- (2,3) (3,3)                                                                                           (18,3)          --
+--                                                      (10,4)        (12,4)                             (18,4)          --
+--                                                                                 (14,5)                (18,5)          --
+-- (2,6) (3,6)               (7,6) (8,6)                (10,6) (11,6)                                                    --
+--                                                                                                                       --
+--                                 (8,8)                (10,8)              (13,8)                (17,8) (18,8) (19,8)   --
+--                                                                                                                       --     
+--            (4,9) (5,9)                                                                                                --
+--                                                                                                                       --
+---------------------------------------------------------------------------------------------------------------------------
+
+bs1 :: [Box]
+bs1  = [(10,1), (11,1), (12,1), (18,1), (2,3),  (3,3),  (18,3), (10,4), (12,4), (18,4), (14,5), (18,5), (2,6), 
+       (3,6),  (7,6),  (8,6),  (10,6), (11,6), (8,8),  (10,8), (13,8), (17,8), (18,8), (19,8), (4,9),  (5,9)]
+       
+-- Grid is 20x10
+-- ex1 = (20, 10, bs1) (1,1) (20,10)
+       
+-- EXAMPLE 2: NICE AND SHORT
+
+-- Boxes are located at
+--------------------------------------------------------
+--       (2,1)                                        --
+--            (3,2)                 (7,2)             --
+--                 (4,3)                              --
+-- (1,4)                            (7,4)             --
+--                                                    --
+--------------------------------------------------------
+
+bs2 :: [Box]
+bs2  = [(2,1), (3,2), (7,2), (1,4), (7,4)]
+
+-- Grid is 9x5
+-- ex2 = (9, 5, bs2) (1,1) (9,5)

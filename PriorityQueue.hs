@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Eta reduce" #-}
 module PriorityQueue where
 
 -- Heap Condition: flattening the queue returns a list of elements in ascending order of priority
