@@ -1,7 +1,10 @@
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Eta reduce" #-}
 import qualified Data.Set as S
 import qualified Data.Array as A
 import PriorityQueue
 
+type Nat = Int
 type Coord = Nat
 type Vertex = (Coord,Coord)
 type Box = Vertex --box identified by its top-left vertex
@@ -20,7 +23,8 @@ boxes :: Grid -> [Box]
 boxes (_,_,bs) = bs
 
 corners :: Box -> [Vertex]
-corners (x,y) = [(x,y),(x+1,y),(x+1,y-1),(x,y-1)]
+corners (x,y) = [(x,y),     (x+1,y),
+                 (x+1,y-1), (x,y-1)]
 
 end :: Path -> Vertex
 end = head . fst
@@ -31,19 +35,18 @@ extract (vs,d) = (reverse vs,d)
 free :: Grid -> Vertex -> Bool
 free (m,n,bs) = (a A.!)
     where a = A.listArray ((0,0),(m+1,n+1)) (repeat True)
-              A.//[((x,y),False)|x<-[0..m+1],y<-[0,n+1]] 
-              A.//[((x,y),False)|x<-[0,m+1],y<-[1..n]] 
-              A.//[((x,y),False)|b <-bs,(x,y)<-corners b]
+              A.//[((x,y),False) |x <-[0..m+1], y<-[0,n+1]] 
+              A.//[((x,y),False) |x <-[0,m+1], y<-[1..n]] 
+              A.//[((x,y),False) |b <-bs, (x,y)<-corners b]
+              
+adjacentsf :: Vertex -> [Vertex]
+adjacentsf (x,y) = [(x-1,y-1), (x-1,y), (x-1,y+1),
+                    (x,y-1),            (x,y+1),
+                    (x+1,y-1), (x+1,y), (x+1,y+1)]
 
 -- fixed-angle sol'n : neighbors of a vertex are unoccupied / non-boundary adjacent grid points
 neighborsf :: Grid -> Graph
 neighborsf grid = filter (free grid) . adjacentsf
-
-adjacentsf :: Vertex -> [Vertex]
-adjacentsf (x,y) = [(x-1,y-1),(x-1,y),(x-1,y+1),(x,y-1),(x,y+1),(x+1,y-1),(x+1,y),(x+1,y+1)]
-
-fpath :: Grid -> Vertex -> Vertex -> Maybe Path
-fpath grid = mstarf (neighborsf grid)
 
 succsf :: Graph -> Vertex -> S.Set Vertex -> Path -> [(Path,Dist)]
 succsf g target visited p =
@@ -62,6 +65,10 @@ mstarf g goal source = msearch S.empty start
                                           where seen v = S.member v vs 
                                                 (p,qs) = removeQ ps
                                                 rs = addListQ (succsf g goal vs p) qs
+                                                
+fpath :: Grid -> Vertex -> Vertex -> Maybe Path
+fpath grid start end = mstarf (neighborsf grid) start end
+
 
 -- lower-order functions for variable angle paths
 hseg :: Segment -> Bool
@@ -119,10 +126,6 @@ vpath1 grid = mstarf (neighborsv grid)
 
 -- variable-angle path v2: neighbors are all adjacent points on grid, but if the parent p of the
 -- current last point u in the path is visible from the point v to be added, delete pu and add pv
-vpath2 :: Grid -> Vertex -> Vertex -> Maybe Path
-vpath2 grid = 
-    mstarv (neighborsf grid) (visible grid)
-    
 succsv :: (Vertex -> [Vertex]) -> (Segment -> Bool) -> Vertex -> S.Set Vertex -> Path -> [(Path, Dist)]
 succsv g vtest target vs p =
     [extend p w|w <- g (end p), not(S.member w vs)]
@@ -144,3 +147,8 @@ mstarv g vtest goal source = msearch S.empty start
                                           where seen v = S.member v vs 
                                                 (p,qs) = removeQ ps
                                                 rs     = addListQ (succsv g vtest goal vs p) qs
+                                                
+vpath2 :: Grid -> Vertex -> Vertex -> Maybe Path
+vpath2 grid = 
+    mstarv (neighborsf grid) (visible grid)
+    

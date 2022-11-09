@@ -73,3 +73,6 @@ popQ q1 = (x, q2)
 
 addListQ :: Ord p => [(a,p)] -> PQ a p -> PQ a p
 addListQ xs q = foldr (uncurry insertQ) q xs
+
+removeQ :: Ord p => PQ a p -> (a, PQ a p)
+removeQ q1 = (x,q2) where ((x,_),q2) = deleteQ q1
